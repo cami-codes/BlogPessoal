@@ -5,8 +5,10 @@ import java.util.Optional;
 
 import org.apache.tomcat.util.codec.binary.Base64;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.web.server.ResponseStatusException;
 
 import com.generation.blogpessoal.model.Usuario;
 import com.generation.blogpessoal.model.UsuarioLogin;
@@ -32,28 +34,17 @@ public class UsuarioService {
 	public Optional<Usuario> atualizarUsuario(Usuario usuario) {
 		
 		if(usuarioRepository.findById(usuario.getId()).isPresent()) {
+		
+			Optional<Usuario> buscaUsuario = usuarioRepository.findByUsuario(usuario.getUsuario());
 			
-			/**
-		 	* Se o Usuário existir no Banco de Dados, a senha será criptografada
-		 	* através do Método criptografarSenha.
-		 	*/
+			if(buscaUsuario.isEmpty() && buscaUsuario.get().getId() != usuario.getId())
+				throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "O usuário digitado já existe!", null);
+			
 			usuario.setSenha(criptografarSenha(usuario.getSenha()));
-
-			/**
-		 	* Assim como na Expressão Lambda, o resultado do método save será retornado dentro
-		 	* de um Optional, com o Usuario persistido no Banco de Dados ou um Optional vazio,
-			* caso aconteça algum erro.
-			* 
-			* ofNullable​ -> Se um valor estiver presente, retorna um Optional com o valor, 
-			* caso contrário, retorna um Optional vazio.
-		 	*/
 			return Optional.ofNullable(usuarioRepository.save(usuario));
 			
 		}
-		
-		/**
-		 * empty -> Retorna uma instância de Optional vazia, caso o usuário não seja encontrado.
-		 */
+	
 		return Optional.empty();
 	
 	}	
